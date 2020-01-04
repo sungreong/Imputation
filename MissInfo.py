@@ -7,9 +7,9 @@ from copy import deepcopy
   Missing 있는 데이터에서 Missing 관련 정보 얻기
 ===============================================
 """
-import warnings
+import warnings , seaborn as sns
 warnings.filterwarnings('ignore')
-
+sns.set(rc={'figure.figsize':(15.7,10.27)})
 
 class MissInfo :
     def __init__(self ,X ,  obj_col , num_col , ord_col , num_scaler) :

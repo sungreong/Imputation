@@ -508,6 +508,8 @@ class Missing_GAIN(Com) :
                 plt.show()    
                 if it % 100 == 0 :
                     fig , ax = plt.subplots(figsize = (15,3))
+                    plt.subplots_adjust(left = 0.18, bottom = 0.1, right = 0.95 ,
+                                        top = 0.95 , hspace = 0, wspace = 0)
                     plt.plot( np.arange(len(self.lr_store)) , self.lr_store) 
                     plt.show()
                     
@@ -522,6 +524,8 @@ class Missing_GAIN(Com) :
     
     def vis(self , ) :
         fig , ax = plt.subplots(figsize = (15,5))
+        plt.subplots_adjust(left = 0.18, bottom = 0.1, right = 0.95 ,
+                                        top = 0.95 , hspace = 0, wspace = 0)
         len_ = len( self.gen_loss)
         plt.plot(np.arange(len_) , self.gen_loss, label = "Generator LOSS" , color = "steelblue" )
         plt.plot(np.arange(len_) , self.disc_loss , label = "Discriminator LOSS" , color = "green")
@@ -536,6 +540,8 @@ class Missing_GAIN(Com) :
     def metric_plot(self, idx= 50) :
         it = len(self.train_loss_te[idx:])
         fig , axs = plt.subplots(1,2, figsize = (15,5))
+        plt.subplots_adjust(left = 0.18, bottom = 0.1, right = 0.95 ,
+                                        top = 0.95 , hspace = 0, wspace = 0)
         total = np.array(self.train_loss_te) +  np.array(self.test_loss_te)
         Range = np.arange(idx, it+ idx)
         axs[0].plot(Range , total[idx:] , 

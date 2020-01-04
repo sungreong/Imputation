@@ -435,6 +435,8 @@ class Missing_AE(Com) :
     
     def loss_plot(self,) :
         fig , axs = plt.subplots(1,2, figsize = (15,5))
+        plt.subplots_adjust(left = 0.18, bottom = 0.1, right = 0.95 ,
+                                        top = 0.95 , hspace = 0, wspace = 0)
         idx = 100
         len_ = len(np.array(self.train_loss_tr[idx:] ))
 #         plt.plot(np.arange(len_) , 

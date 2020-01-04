@@ -24,6 +24,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import lightgbm as lgb
 
+sns.set(rc={'figure.figsize':(15.7,10.27)})
 
 def make_dir(directory ) :
     directory = "/".join(directory.split("/")[:-1])
@@ -217,20 +218,21 @@ class Evaluate :
         obj_col = miss_info["obj_col"]
         cat_encoder = miss_info["ce_encoder"]
         Real = deepcopy(miss_info["ori_raw_pd"])
+        Imputed = deepcopy(self.Outcome_Dict["MissForest"])
         if obj_col == [] : return "object columns not exist"
         else :
             for k in cat_encoder.category_mapping :
                 col , map_ = k["col"] , k["mapping"]
                 if col == self.target :
                     continue
-                self.Outcome_Dict["MissForest"][col] = self.Outcome_Dict["MissForest"][col].astype(str)
+                Imputed[col] =Imputed[col].astype(str)
                 try :
-                    self.Outcome_Dict["MissForest"][col] = self.Outcome_Dict["MissForest"][col].\
+                    Imputed[col] = Imputed[col].\
                 astype(float).replace(dict(zip(k["mapping"].values, k["mapping"].index )))       
                 except :
                     pass
             obj_col = miss_info["obj_col"]
-            Imputed = self.Outcome_Dict["MissForest"]
+#             Imputed = self.Outcome_Dict["MissForest"]
             Real = Real.reset_index(drop = True)
             result = self.PFC(Real, Imputed , save_file_path) 
             return result
@@ -421,17 +423,19 @@ class Evaluate :
                 del self.algo2[name]
         return None
     
-    def cv_boxplot(self, metric = "rmse",path = None ,  **kwargs) :
+    def cv_boxplot(self, metric = "nrmse",path = None ,  **kwargs) :
         try :
             cv = deepcopy(kwargs["cv"])
         except :
             cv  = deepcopy(self.cv[metric])
         cv_melting = pd.DataFrame(cv).melt()
-        #sns.set(rc={'figure.figsize':(15.7,10.27)})
+        sns.set(rc={'figure.figsize':(15.7,10.27)})
         fig , ax = plt.subplots(figsize =(15.7,10.27)) 
         plt.subplots_adjust(left = 0.18, bottom = 0.1, right = 0.95 , top = 0.95 , hspace = 0, wspace = 0)
-        sns.boxplot(y="variable", x="value", data=cv_melting , showfliers=False)
-        ax.set_ylabel("Methods", fontsize = 25)
+        sns.boxplot(x="variable", y="value", data=cv_melting , showfliers=False)
+        ax.set_xlabel("Methods", fontsize = 25)
+        ax.set_ylabel("Score", fontsize = 25)
+        ax.set_ylim(bottom = 0 , top = 1 )
         ax.set_title('Metric : {}'.format(metric) ,fontsize= 30) # title of plot
         if path is None :pass
         else : 
@@ -488,6 +492,9 @@ class Evaluate :
         Result["target"] = self.target
         Result["miss_info"] = self.miss_info
         Result["cv"] = self.cv
+        Result["cv_test_index"] = self.cv_test_index
+        Result["T"] = self.T
+        Result["target"] = self.target
         try :
             Result["pd_obj"] = self.pd_obj
         except :
@@ -503,6 +510,7 @@ class Evaluate :
         except Exception as e :
             print(e)
             raise
+        self.LoadResult = Result 
         self.MSE = Result["MSE"]
         self.result = Result["RESULT"]
         try :
@@ -714,16 +722,17 @@ class Evaluate :
         sns.set_context("paper", 
                         rc={"font.size":20,"axes.titlesize":30,"axes.labelsize":20},
                         font_scale = 2.0)  
-        ax = sns.boxplot(y="variable", x="value", data=cv_melting , showfliers=False)
-        ax.set(xlabel='Score', ylabel='Method',
+        ax = sns.boxplot(x="variable", y="value", data=cv_melting , showfliers=False)
+        ax.set(xlabel='Algorithms', ylabel='Score',
                title = "Model CV Score Comparision")
-        list_ = list(ax.get_yticklabels())
-        xticklables_ = []
+        ax.set_ylim(top = 1 )
+        list_ = list(ax.get_xticklabels())
+        ticklables_ = []
         for tick , label in enumerate(list_) :
             method = label.get_text()
             value  = cv_mean[method]
-            xticklables_.append("{:12}({:5.2f})".format(method , value*100,3))
-        ax.set_yticklabels(xticklables_, rotation = 0)
+            ticklables_.append("{}\n({:5.2f})".format(method , value*100,3))
+        ax.set_xticklabels(ticklables_, rotation = 0)
         if path is None : pass
         else : 
             make_dir(path)
