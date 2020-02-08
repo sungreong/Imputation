@@ -10,8 +10,7 @@ import numpy as np, re, os
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import warnings, dill, sys
-import inspect
-
+import inspect , seaborn as sns
 warnings.filterwarnings('ignore')
 from Common import *
 
@@ -228,6 +227,7 @@ class GAIN(Com):
         self.train_loss_te = []
         self.test_loss_tr = []
         self.test_loss_te = []
+        self.sep_store = []
 
     def set_env(self, TrainSet, ValidSet, mb_size, hint,
                 Gact=tf.nn.selu, Dact=tf.nn.selu, alpha=3,
@@ -468,6 +468,7 @@ class GAIN(Com):
 
             if (it % 5 == 0) & (it > 0):
                 clear_output()
+                plt.style.use('dark_background')
                 fig, axes = plt.subplots(1, 2, figsize=(15, 3))
                 plt.subplots_adjust(left=0.05, bottom=0.1, right=0.95,
                                     top=0.86, hspace=0, wspace=0.09)
@@ -481,10 +482,10 @@ class GAIN(Com):
                                            fontsize=15
                                            )
                 ax[0].plot(self.steps, self.pfc_store)
-                ax[0].hlines(pfc, 0, max(self.steps))
+                ax[0].hlines(pfc, 0, max(self.steps), colors="red")
                 # ax[0].set_title(f"PFC : min : {min(self.pfc_store)}")
                 ax[1].plot(self.steps, self.rmse_store)
-                ax[1].hlines(rmse, 0, max(self.steps))
+                ax[1].hlines(rmse, 0, max(self.steps), colors="red")
                 save_png = os.path.join(self.save_model_path, "rmse_pfc_result.png")
                 plt.savefig(save_png)
                 # ax[1].set_title(f"RMSE : min : {min(self.rmse_store)}")
@@ -525,6 +526,7 @@ class GAIN(Com):
         imputed_result = (
                 result * self.ForComp_missing_matrix +
                 self.ForComp.fillna(-100) * (1 - self.ForComp_missing_matrix))
+        self.visualize(self.key_cond , TotalFeed)
         pfc, rmse = self.calculate_rmse_pfc(self.not_missing_data,
                                             imputed_result,
                                             self.ForComp_missing_matrix == 1,
@@ -544,6 +546,39 @@ class GAIN(Com):
         with Parallel(n_jobs=n_count, backend="multiprocessing") as parallel:
             results = parallel(
                 delayed(self.running)(path=f"./{title}/{i}", init=inits[i]) for i in range(n_count))
+
+
+    def visualize(self , key_cond , feed_dict):
+        keys = list(key_cond.keys())
+        mod = sys.modules[__name__]
+        name = ['loss_{}'.format(c) for c in keys]
+        # seper_loss = [getattr(mod, c) for c in name]
+        losses = self.sess.run(self.seperate_var , feed_dict=feed_dict)
+        self.sep_store.append(np.array(losses))
+        vis = np.array(self.sep_store)
+        default_dashes = \
+            [() for _ in range(len(name))]
+        index = np.arange(0, vis.shape[0])
+        wide_df = pd.DataFrame(vis, index, name)
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 8))
+        plt.style.use('dark_background')
+        plt.subplots_adjust(left=0.05, bottom=0.2, right=0.95,
+                            top=0.95, wspace=None, hspace=0.0)
+        palette = sns.color_palette("Spectral", len(name))
+        sns.lineplot(data=wide_df,
+                     dashes=default_dashes,
+                     palette=palette)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                         box.width, box.height * 0.9])
+        #                     ax.legend(loc="center right")
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.005),
+                  fancybox=True, shadow=True, ncol=5)
+        save_png = os.path.join(self.save_model_path, "loss_mse_plot_{}.png".format(len(name)))
+        plt.savefig(save_png)
+        plt.close()
+        #losses = " | ".join("{:.3f}".format(i) for i in losses)
+
 
 
 from functools import wraps

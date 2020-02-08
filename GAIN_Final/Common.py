@@ -218,6 +218,7 @@ class Com:
     def CatNumEmb_Loss(self, Gene, Real, Mask, cond, key_cond, Weight_Info):
         LOSS = 0
         keys = list(key_cond.keys())
+        self.seperate_var = []
         with tf.variable_scope("Columns/Loss"):
             if len(cond) == cond[-1][1]:
                 LOSS = gainloss(Mask, Gene, Real, None)
@@ -231,7 +232,8 @@ class Com:
                     sumLoss = gainloss(Msplit, Gsplit, Rsplit, None)
                     print("StartNode : {:3} | {:10} | [{}]". \
                           format(StartNode, type_, diff))
-                    setattr(mod, 'loss_{}'.format(keys[idx]), sumLoss)
+                    # setattr(mod, 'loss_{}'.format(keys[idx]), sumLoss)
+                    self.seperate_var.append(sumLoss)
             else:
                 for idx, (c, w_info) in enumerate(zip(cond, Weight_Info)):
                     StartNode, TerminalNode = c[0], c[1]
@@ -248,9 +250,10 @@ class Com:
                         type_ = "multiclass"
                     LOSS += sumLoss
                     print("StartNode : {:3} | {:10} | [{}]".format(StartNode, type_, diff))
-                    import sys
-                    mod = sys.modules[__name__]
-                    setattr(mod, 'loss_{}'.format(keys[idx]), sumLoss)
+                    # import sys
+                    # mod = sys.modules[__name__]
+                    # setattr(mod, 'loss_{}'.format(keys[idx]), sumLoss)
+                    self.seperate_var.append(sumLoss)
         return LOSS
 
     def calculate_rmse_pfc(self,
