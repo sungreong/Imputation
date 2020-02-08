@@ -63,7 +63,7 @@ def multiclassloss(M, G, R, weights):
 
 def mseloss(M, G, R):
     sumLoss = tf.reduce_mean(M * tf.square(R - G))
-    sumLoss /= tf.clip_by_value(tf.reduce_mean(R), 1e-8, 1e+8)
+    sumLoss /= tf.clip_by_value(tf.reduce_mean(R), 1e-1, 1e+8)
     sumLoss = tf.clip_by_value(sumLoss, 0.0, 1e+8)
     return sumLoss
 
